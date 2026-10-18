@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E7ECEE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11171B" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<title>Logbook</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#E7ECEE; --card:#FFFFFF; --ink:#16232B; --muted:#5C6B74; --line:#CFD8DD;
+  --accent:#1F5FD6; --accent-ink:#FFFFFF; --soft:#EEF2F4; --danger:#B3261E;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11171B; --card:#1A2329; --ink:#E6EDF1; --muted:#93A3AD; --line:#2B3841;
+    --accent:#6EA2FF; --accent-ink:#0B1420; --soft:#222D34; --danger:#FF8A80;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+button,input,select{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+
+.wrap{max-width:960px; margin:0 auto; padding:14px 16px 96px}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
+.bar h1{font-size:1.4rem; font-weight:750; letter-spacing:-.01em; margin:0; flex:1; text-align:center}
+.bar.left h1{text-align:left}
+
+.btn{
+  border:1px solid var(--line); background:var(--card); border-radius:10px;
+  padding:10px 14px; min-height:44px; font-weight:600;
+}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent}
+.btn.danger{color:var(--danger)}
+.btn.ghost{background:transparent; border-color:transparent; color:var(--muted); padding:8px 10px; min-height:36px; font-weight:500}
+.btn.small{min-height:36px; padding:6px 12px; font-size:.92rem}
+
+.list{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px}
+.card{
+  background:var(--card); border:1px solid var(--line); border-top:5px solid var(--tone,var(--accent));
+  border-radius:14px; padding:14px 14px 14px; display:flex; flex-direction:column; gap:8px;
+}
+.card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:8px}
+.card h2{font-size:1.15rem; margin:0; line-height:1.25; overflow-wrap:anywhere}
+.meta{margin:0; color:var(--muted); font-size:.92rem}
+.chips{display:flex; flex-wrap:wrap; gap:6px; min-height:0}
+.chip{background:var(--soft); border-radius:999px; padding:2px 10px; font-size:.82rem; color:var(--muted)}
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px}
+
+.empty{
+  border:2px dashed var(--line); border-radius:14px; padding:28px 18px; text-align:center; color:var(--muted);
+}
+.empty strong{display:block; color:var(--ink); font-size:1.05rem; margin-bottom:4px}
+
+.entry{
+  background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px;
+  display:flex; flex-direction:column; gap:6px; border-left:5px solid var(--tone,var(--accent));
+}
+.entry .when{font-weight:650}
+.entry .rel{color:var(--muted); font-size:.88rem}
+.entry dl{margin:0; display:grid; grid-template-columns:max-content 1fr; gap:2px 14px}
+.entry dt{color:var(--muted)}
+.entry dd{margin:0; overflow-wrap:anywhere}
+.entry .row{display:flex; gap:6px; justify-content:flex-end}
+.stack{display:flex; flex-direction:column; gap:12px}
+
+dialog{
+  border:none; border-radius:18px; padding:0; width:min(520px,calc(100vw - 24px));
+  background:var(--card); color:var(--ink); max-height:calc(100dvh - 24px);
+}
+dialog::backdrop{background:rgba(5,10,14,.55)}
+.sheet{padding:18px; display:flex; flex-direction:column; gap:14px}
+.sheet h2{margin:0; font-size:1.2rem}
+.sheet p{margin:0; color:var(--muted)}
+label.f{display:flex; flex-direction:column; gap:5px; font-weight:600; font-size:.95rem}
+label.f.check{flex-direction:row; align-items:center; gap:10px}
+input[type=text],input[type=number],input[type=date],input[type=datetime-local],select{
+  width:100%; min-height:44px; padding:8px 10px; border:1px solid var(--line); border-radius:10px;
+  background:var(--bg); font-weight:400;
+}
+input[type=checkbox]{width:22px; height:22px; accent-color:var(--accent)}
+.sheet-actions{display:flex; gap:8px; justify-content:flex-end; margin-top:4px; flex-wrap:wrap}
+
+.fieldrow{
+  border:1px solid var(--line); border-radius:12px; padding:10px; display:grid; gap:8px;
+  grid-template-columns:1fr 130px; background:var(--soft);
+}
+.fieldrow .full{grid-column:1/-1}
+.fieldrow .tools{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.fieldrow label.req{display:flex; align-items:center; gap:8px; font-size:.92rem}
+
+#toast{
+  position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+  background:var(--ink); color:var(--bg); padding:10px 14px; border-radius:12px; display:none;
+  align-items:center; gap:12px; max-width:calc(100vw - 32px); z-index:50; font-weight:550;
+}
+#toast.show{display:flex}
+#toast button{background:none; border:none; color:inherit; text-decoration:underline; font-weight:700; padding:4px}
+.banner{background:var(--soft); border:1px solid var(--danger); color:var(--danger); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:.92rem}
+
+@media (max-width:420px){ .fieldrow{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:no-preference){
+  dialog[open]{animation:pop .14s ease-out}
+  @keyframes pop{from{transform:translateY(8px); opacity:0}to{transform:none; opacity:1}}
+}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<dialog id="dlg"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+"use strict";
+
+/* ---------- storage (IndexedDB, falls back to memory) ---------- */
+let db = null;
+let persistent = true;
+
+function openDB() {
+  return new Promise(resolve => {
+    try {
+      const req = indexedDB.open("logbook", 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore("activities", { keyPath: "id" });
+        req.result.createObjectStore("entries", { keyPath: "id" });
+      };
+      req.onsuccess = () => { db = req.result; resolve(); };
+      req.onerror = () => { persistent = false; resolve(); };
+    } catch (e) { persistent = false; resolve(); }
+  });
+}
+function idb(store, fn) {
+  return new Promise((resolve, reject) => {
+    if (!db) return resolve();
+    const t = db.transaction(store, "readwrite");
+    fn(t.objectStore(store));
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+  });
+}
+const dbPut = (store, obj) => idb(store, s => s.put(obj));
+const dbDel = (store, id) => idb(store, s => s.delete(id));
+function dbAll(store) {
+  return new Promise(resolve => {
+    if (!db) return resolve([]);
+    const r = db.transaction(store).objectStore(store).getAll();
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => resolve([]);
+  });
+}
+
+/* ---------- state & helpers ---------- */
+const state = { activities: [], entries: [], view: "home", activityId: null };
+const TYPES = [
+  ["text", "Text"], ["number", "Number"], ["date", "Date"],
+  ["checkbox", "Checkbox"], ["select", "Dropdown"]
+];
+const TONES = ["#1F5FD6", "#12907A", "#B7791F", "#7C4DBE", "#C2335A", "#4B6A88"];
+
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const $ = sel => document.querySelector(sel);
+const getActivity = id => state.activities.find(a => a.id === id);
+const entriesOf = id => state.entries.filter(e => e.activityId === id).sort((a, b) => b.timestamp - a.timestamp);
+
+function tone(activity) {
+  let h = 0;
+  for (const ch of activity.name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return TONES[h % TONES.length];
+}
+function toLocalInput(ms) {
+  const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000);
+  return d.toISOString().slice(0, 16);
+}
+function startOfDay(ms) { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function ago(ms) {
+  const days = Math.round((startOfDay(Date.now()) - startOfDay(ms)) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 60) return days + " days ago";
+  if (days < 730) return Math.round(days / 30.4) + " months ago";
+  return Math.round(days / 365) + " years ago";
+}
+const fmtWhen = ms => new Date(ms).toLocaleString([], { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+function fmtValue(f, v) {
+  if (f.type === "checkbox") return v ? "Yes" : "No";
+  if (v === undefined || v === "" || v === null) return "—";
+  if (f.type === "date") return new Date(v + "T00:00").toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
+  return String(v);
+}
+
+let toastTimer;
+function toast(msg, undoFn) {
+  const t = $("#toast");
+  t.innerHTML = `<span>${esc(msg)}</span>` + (undoFn ? `<button type="button" id="undo">Undo</button>` : "");
+  t.classList.add("show");
+  if (undoFn) $("#undo").onclick = () => { undoFn(); t.classList.remove("show"); };
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), undoFn ? 5000 : 2500);
+}
+
+function confirmBox(title, text, okLabel) {
+  return new Promise(resolve => {
+    openDialog(`
+      <div class="sheet">
+        <h2>${esc(title)}</h2><p>${esc(text)}</p>
+        <div class="sheet-actions">
+          <button class="btn" data-x="no">Cancel</button>
+          <button class="btn danger" data-x="yes">${esc(okLabel)}</button>
+        </div>
+      </div>`);
+    const dlg = $("#dlg");
+    dlg.onclick = e => {
+      const x = e.target.closest("[data-x]");
+      if (!x) return;
+      dlg.onclick = null; dlg.close(); resolve(x.dataset.x === "yes");
+    };
+    dlg.oncancel = () => resolve(false);
+  });
+}
+
+/* ---------- dialog plumbing ---------- */
+function openDialog(html) {
+  const dlg = $("#dlg");
+  dlg.oncancel = null; dlg.onclick = null; dlg.onsubmit = null;
+  dlg.innerHTML = html;
+  if (!dlg.open) dlg.showModal();
+}
+function closeDialog() { const d = $("#dlg"); if (d.open) d.close(); }
+$("#dlg").addEventListener("mousedown", e => { if (e.target === e.currentTarget) closeDialog(); });
+
+/* ---------- rendering ---------- */
+function render() {
+  const app = $("#app");
+  app.innerHTML = state.view === "history" ? historyView() : homeView();
+  if (state.view === "history") window.scrollTo(0, 0);
+}
+
+function homeView() {
+  const banner = persistent ? "" :
+    `<div class="banner">Browser storage isn't available here, so records will be lost when you close this page.</div>`;
+  const cards = state.activities.map(a => {
+    const list = entriesOf(a.id);
+    const last = list[0];
+    const meta = last
+      ? `Last done ${ago(last.timestamp)} · ${list.length} ${list.length === 1 ? "record" : "records"}`
+      : "Not done yet";
+    const chips = a.fields.map(f => `<span class="chip">${esc(f.name)}</span>`).join("");
+    return `
+      <article class="card" style="--tone:${tone(a)}">
+        <div class="card-head">
+          <h2>${esc(a.name)}</h2>
+          <button class="btn ghost" data-act="edit" data-id="${a.id}" aria-label="Edit ${esc(a.name)}">Edit</button>
+        </div>
+        <p class="meta">${meta}</p>
+        ${chips ? `<div class="chips">${chips}</div>` : ""}
+        <div class="actions">
+          <button class="btn primary" data-act="add" data-id="${a.id}">Add record</button>
+          <button class="btn" data-act="history" data-id="${a.id}">History</button>
+        </div>
+      </article>`;
+  }).join("");
+
+  return `
+    ${banner}
+    <div class="bar">
+      <button class="btn" data-act="backup">Backup</button>
+      <h1>Logbook</h1>
+      <button class="btn primary" data-act="new">+ New activity</button>
+    </div>
+    ${cards
+      ? `<div class="list">${cards}</div>`
+      : `<div class="empty"><strong>No activities yet</strong>Tap “New activity” and create one, like “Haircut” or “Install propane tank”.</div>`}`;
+}
+
+function historyView() {
+  const a = getActivity(state.activityId);
+  if (!a) { state.view = "home"; return homeView(); }
+  const list = entriesOf(a.id);
+  const items = list.map(e => {
+    const rows = a.fields.map(f => `<dt>${esc(f.name)}</dt><dd>${esc(fmtValue(f, e.values[f.id]))}</dd>`).join("");
+    return `
+      <article class="entry" style="--tone:${tone(a)}">
+        <div><span class="when">${esc(fmtWhen(e.timestamp))}</span> <span class="rel">· ${ago(e.timestamp)}</span></div>
+        ${rows ? `<dl>${rows}</dl>` : ""}
+        <div class="row">
+          <button class="btn small" data-act="edit-entry" data-id="${e.id}">Edit</button>
+          <button class="btn small danger" data-act="del-entry" data-id="${e.id}">Delete</button>
+        </div>
+      </article>`;
+  }).join("");
+  return `
+    <div class="bar left">
+      <button class="btn" data-act="back">Back</button>
+      <h1>${esc(a.name)}</h1>
+      <button class="btn primary" data-act="add" data-id="${a.id}">Add record</button>
+    </div>
+    ${items ? `<div class="stack">${items}</div>` : `<div class="empty"><strong>No records yet</strong>Add the first record for this activity.</div>`}`;
+}
+
+/* ---------- entry form ---------- */
+function fieldControl(f, val) {
+  const name = `name="${f.id}"`;
+  const req = f.required && f.type !== "checkbox" ? "required" : "";
+  const v = esc(val ?? "");
+  switch (f.type) {
+    case "number": return `<input type="number" step="any" inputmode="decimal" ${name} ${req} value="${v}">`;
+    case "date": return `<input type="date" ${name} ${req} value="${v}">`;
+    case "checkbox": return `<input type="checkbox" ${name} ${val ? "checked" : ""}>`;
+    case "select":
+      return `<select ${name} ${req}><option value="">Choose…</option>${(f.options || []).map(o =>
+        `<option value="${esc(o)}" ${o === val ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+    default: return `<input type="text" ${name} ${req} value="${v}" autocomplete="off">`;
+  }
+}
+
+function openEntryForm(activityId, entryId) {
+  const a = getActivity(activityId);
+  const existing = entryId ? state.entries.find(e => e.id === entryId) : null;
+  const last = entriesOf(activityId)[0];
+  const today = toLocalInput(Date.now()).slice(0, 10);
+
+  const body = a.fields.map(f => {
+    let val = existing ? existing.values[f.id] : last ? last.values[f.id] : undefined;
+    if (!existing && f.type === "date") val = today;
+    const control = fieldControl(f, val);
+    const label = esc(f.name) + (f.required && f.type !== "checkbox" ? " *" : "");
+    return f.type === "checkbox"
+      ? `<label class="f check">${control}<span>${label}</span></label>`
+      : `<label class="f"><span>${label}</span>${control}</label>`;
+  }).join("");
+
+  openDialog(`
+    <form class="sheet" id="entryForm">
+      <h2>${existing ? "Edit record" : "Add record"} · ${esc(a.name)}</h2>
+      <label class="f"><span>When</span>
+        <input type="datetime-local" name="__ts" required value="${toLocalInput(existing ? existing.timestamp : Date.now())}">
+      </label>
+      ${body}
+      <div class="sheet-actions">
+        <button type="button" class="btn" data-x="cancel">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>`);
+
+  const dlg = $("#dlg");
+  dlg.onclick = e => { if (e.target.closest("[data-x=cancel]")) closeDialog(); };
+  $("#entryForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const form = ev.target;
+    const values = {};
+    for (const f of a.fields) {
+      const el = form.querySelector(`[name="${f.id}"]`);
+      if (f.type === "checkbox") values[f.id] = el.checked;
+      else if (el.value !== "") values[f.id] = f.type === "number" ? parseFloat(el.value) : el.value;
+    }
+    const ts = new Date(form.querySelector('[name="__ts"]').value).getTime();
+    if (existing) { existing.timestamp = ts; existing.values = values; await dbPut("entries", existing); }
+    else { const e = { id: uid(), activityId, timestamp: ts, values }; state.entries.push(e); await dbPut("entries", e); }
+    closeDialog(); render(); toast("Saved");
+  };
+}
+
+async function quickLog(a) {
+  const e = { id: uid(), activityId: a.id, timestamp: Date.now(), values: {} };
+  state.entries.push(e); await dbPut("entries", e); render();
+  toast(`Logged “${a.name}”`, async () => {
+    state.entries = state.entries.filter(x => x.id !== e.id);
+    await dbDel("entries", e.id); render();
+  });
+}
+
+/* ---------- activity editor ---------- */
+let draft = null;
+
+function openActivityEditor(id) {
+  const a = id ? getActivity(id) : null;
+  draft = a
+    ? { id: a.id, name: a.name, fields: a.fields.map(f => ({ ...f, optionsText: (f.options || []).join(", ") })) }
+    : { id: null, name: "", fields: [] };
+  drawEditor();
+}
+
+function drawEditor() {
+  const rows = draft.fields.map((f, i) => `
+    <div class="fieldrow" data-i="${i}">
+      <input type="text" data-k="name" placeholder="Field name, e.g. Tank size" value="${esc(f.name)}" aria-label="Field name">
+      <select data-k="type" aria-label="Field type">
+        ${TYPES.map(([v, l]) => `<option value="${v}" ${f.type === v ? "selected" : ""}>${l}</option>`).join("")}
+      </select>
+      ${f.type === "select" ? `<input class="full" type="text" data-k="optionsText" placeholder="Options, separated by commas" value="${esc(f.optionsText || "")}" aria-label="Dropdown options">` : ""}
+      <div class="tools full">
+        ${f.type === "checkbox" ? "<span></span>" : `<label class="req"><input type="checkbox" data-k="required" ${f.required ? "checked" : ""}> Required</label>`}
+        <button type="button" class="btn small danger" data-x="rm" data-i="${i}">Remove field</button>
+      </div>
+    </div>`).join("");
+
+  openDialog(`
+    <form class="sheet" id="actForm">
+      <h2>${draft.id ? "Edit activity" : "New activity"}</h2>
+      <label class="f"><span>Name</span>
+        <input type="text" id="actName" required placeholder="e.g. Install propane tank" value="${esc(draft.name)}" autocomplete="off">
+      </label>
+      <div class="stack" id="fieldRows">${rows}</div>
+      <button type="button" class="btn" data-x="addfield">+ Add field</button>
+      <p>${draft.fields.length ? "" : "No fields means one tap on the card logs the activity instantly."}</p>
+      <div class="sheet-actions">
+        ${draft.id ? `<button type="button" class="btn danger" data-x="delete" style="margin-right:auto">Delete activity</button>` : ""}
+        <button type="button" class="btn" data-x="cancel">Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>`);
+
+  const dlg = $("#dlg");
+  $("#actName").oninput = e => { draft.name = e.target.value; };
+  dlg.oninput = e => {
+    const row = e.target.closest(".fieldrow");
+    if (!row || !e.target.dataset.k) return;
+    const f = draft.fields[+row.dataset.i], k = e.target.dataset.k;
+    f[k] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+  };
+  dlg.onchange = e => {
+    if (e.target.dataset.k === "type") { drawEditor(); }
+  };
+  dlg.onclick = async e => {
+    const x = e.target.closest("[data-x]");
+    if (!x) return;
+    if (x.dataset.x === "cancel") closeDialog();
+    if (x.dataset.x === "addfield") {
+      draft.fields.push({ id: uid(), name: "", type: "text", required: false, optionsText: "" });
+      drawEditor();
+      const inputs = document.querySelectorAll('.fieldrow [data-k="name"]');
+      inputs[inputs.length - 1].focus();
+    }
+    if (x.dataset.x === "rm") { draft.fields.splice(+x.dataset.i, 1); drawEditor(); }
+    if (x.dataset.x === "delete") {
+      const a = getActivity(draft.id);
+      const n = entriesOf(a.id).length;
+      const ok = await confirmBox(`Delete “${a.name}”?`, `This also deletes its ${n} ${n === 1 ? "record" : "records"}. This can't be undone.`, "Delete");
+      if (ok) {
+        for (const en of entriesOf(a.id)) await dbDel("entries", en.id);
+        state.entries = state.entries.filter(en => en.activityId !== a.id);
+        state.activities = state.activities.filter(x => x.id !== a.id);
+        await dbDel("activities", a.id);
+        state.view = "home"; render();
+      } else { drawEditor(); }
+    }
+  };
+  $("#actForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const fields = draft.fields.map(f => ({
+      id: f.id, name: f.name.trim() || "Untitled", type: f.type,
+      required: !!f.required && f.type !== "checkbox",
+      options: f.type === "select" ? (f.optionsText || "").split(",").map(s => s.trim()).filter(Boolean) : []
+    }));
+    const obj = { id: draft.id || uid(), name: draft.name.trim(), fields };
+    const i = state.activities.findIndex(a => a.id === obj.id);
+    if (i >= 0) state.activities[i] = obj; else state.activities.push(obj);
+    await dbPut("activities", obj);
+    closeDialog(); render(); toast("Saved");
+  };
+}
+
+/* ---------- backup ---------- */
+function openBackup() {
+  openDialog(`
+    <div class="sheet">
+      <h2>Backup</h2>
+      <p>Export saves all activities and records to a JSON file. Import adds the contents of a backup file; items with the same id are overwritten.</p>
+      <div class="sheet-actions">
+        <button class="btn" data-x="cancel">Close</button>
+        <button class="btn" data-x="import">Import</button>
+        <button class="btn primary" data-x="export">Export</button>
+      </div>
+    </div>`);
+  $("#dlg").onclick = e => {
+    const x = e.target.closest("[data-x]");
+    if (!x) return;
+    if (x.dataset.x === "cancel") closeDialog();
+    if (x.dataset.x === "export") { exportData(); closeDialog(); }
+    if (x.dataset.x === "import") { closeDialog(); $("#importFile").click(); }
+  };
+}
+function exportData() {
+  const data = { app: "logbook", version: 1, exportedAt: new Date().toISOString(), activities: state.activities, entries: state.entries };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `logbook-${toLocalInput(Date.now()).slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast("Exported");
+}
+$("#importFile").addEventListener("change", async ev => {
+  const file = ev.target.files[0]; ev.target.value = "";
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!Array.isArray(data.activities) || !Array.isArray(data.entries)) throw new Error("bad");
+    for (const a of data.activities) {
+      const i = state.activities.findIndex(x => x.id === a.id);
+      if (i >= 0) state.activities[i] = a; else state.activities.push(a);
+      await dbPut("activities", a);
+    }
+    for (const e of data.entries) {
+      const i = state.entries.findIndex(x => x.id === e.id);
+      if (i >= 0) state.entries[i] = e; else state.entries.push(e);
+      await dbPut("entries", e);
+    }
+    render(); toast(`Imported ${data.activities.length} activities, ${data.entries.length} records`);
+  } catch (e) { toast("That file isn't a valid Logbook backup"); }
+});
+
+/* ---------- events ---------- */
+$("#app").addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-act]");
+  if (!b) return;
+  const id = b.dataset.id;
+  switch (b.dataset.act) {
+    case "new": openActivityEditor(null); break;
+    case "edit": openActivityEditor(id); break;
+    case "backup": openBackup(); break;
+    case "history": state.view = "history"; state.activityId = id; render(); break;
+    case "back": state.view = "home"; render(); break;
+    case "add": {
+      const a = getActivity(id);
+      if (a.fields.length === 0) quickLog(a); else openEntryForm(id);
+      break;
+    }
+    case "edit-entry": { const e = state.entries.find(x => x.id === id); openEntryForm(e.activityId, id); break; }
+    case "del-entry": {
+      if (await confirmBox("Delete this record?", "This can't be undone.", "Delete")) {
+        state.entries = state.entries.filter(x => x.id !== id);
+        await dbDel("entries", id); render();
+      }
+      break;
+    }
+  }
+});
+
+/* ---------- boot ---------- */
+(async function init() {
+  await openDB();
+  state.activities = await dbAll("activities");
+  state.entries = await dbAll("entries");
+  render();
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

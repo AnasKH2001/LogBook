@@ -1,0 +1,12 @@
+{
+  "name": "Logbook",
+  "short_name": "Logbook",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#E7ECEE",
+  "theme_color": "#E7ECEE",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
